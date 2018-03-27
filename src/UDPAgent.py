@@ -1,6 +1,8 @@
 import socket
 import struct
 import sys
+import psutil
+import json
 
 class UDPAgent:
 
@@ -9,6 +11,15 @@ class UDPAgent:
         self.multicast_group = multicast_group
         self.server_port = server_ipport
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+
+
+    def getInfo(self):
+        (_ ,min,max) = psutil.cpu_freq()
+        (memtotal,_,_,_,_,_,_,_) = psutil.virtual_memory()
+
+        return (min,max,memtotal)
+
 
     def receive(self):
         # Bind to the server address
@@ -29,6 +40,5 @@ class UDPAgent:
             print >> sys.stderr, data
 
             print >> sys.stderr, 'sending acknowledgement to', address
-            self.socket.sendto('ack', address)
-
-            #buscar o resto das merdas e meter na mensagem PELO MEIO SENOA O 17 ENERVA-SE E ENERVA-ME A MIM
+            info = self.getInfo()
+            self.socket.sendto(json.dumps(info), address)
