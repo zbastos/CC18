@@ -1,53 +1,66 @@
 
-import time, socket, sys, struct
+import time
+import socket
+import sys
+import struct
+import json
 
 
 class UDPMonitor:
-    def __init__(self, table, m_time, ip, port):
+
+    def __init__(self, table, ip, port, m_time, timeout=1):
         self.multicast_Time = m_time
         self.stateTable = table
         self.multicast_group = (ip, port)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.timeout = timeout
 
+    """
+            Multicast function, will keep running as long as UDPMonitor is up
+    """
     def multicast(self):
-        """
-        Multicast function, will keep running as long as UDPMonitor is up
-        """
 
-        self.socket.settimeout(1)
+        self.socket.settimeout(self.timeout)
         message = "OlHa, SoY Tu PaDrE"
+        try:
+            while True:
+                time.sleep(self.multicast_Time)
 
-        while True:
-            time.sleep(self.multicast_Time)
-            # depende das infos da tabela, ir buscar o maior (?)
-            ttl = struct.pack('b',1)
-            self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+                # depende das infos da tabela, ir buscar o maior (?)
+                ttl = struct.pack('b',1)
 
-            try:
-                print ('sending %s') %message
-                sent = self.socket.sendto(message, self.multicast_group)
+                self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
-                while True:
-                    print ('Waiting to receive')
+                try:
+                    print ('sending %s') %message
+                    sent = self.socket.sendto(message, self.multicast_group)
 
-                    try:
-                        data, server = self.socket.recvfrom(16) #(?)
-                    except socket.timeout:
-                        print >>sys.stderr, 'Timed out, no response'
-                        break
-                    else:
-                        print('Received message %s from %s') % (data, server)
+                    while True:
+                        if self.receive_msg() != 0:
+                            break
+                finally:
+                    print("Closing socket") #(?)
+        finally:
+            self.socket.close()
 
-            finally:
-                print("Closing socket") #(?)
+    """
+    Receive msg from random multicast server
+    """
+    def receive_msg(self):
+        print('Waiting to receive')
 
-        self.socket.close()
-
-    def sendUDP(self, entry):
-        """
-        Send UDP request to single server
-        :return:
-        """
+        try:
+            datastr, server = self.socket.recvfrom(1024)  # (?)
+            # convert json object to python object
+            data = json.loads(datastr)
+            # update infos from client serer
+            self.stateTable.updateInfo(server, data)
+        except socket.timeout:
+            print >> sys.stderr, 'Timed out, no response'
+            return -1
+        else:
+            print('Received message %s from %s') % (data, server)
+            return 0
 
 
 def main():
