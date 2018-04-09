@@ -4,6 +4,7 @@ import socket
 import sys
 import struct
 import json
+from InfoTable import InfoTable
 
 
 class UDPMonitor:
@@ -32,8 +33,8 @@ class UDPMonitor:
                 self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
                 try:
-                    print ('sending %s') %message
-                    sent = self.socket.sendto(message, self.multicast_group)
+                    print ("sending "+message)
+                    sent = self.socket.sendto(bytes(message,"utf-8"), self.multicast_group)
 
                     while True:
                         if self.receive_msg() != 0:
@@ -56,7 +57,7 @@ class UDPMonitor:
             # update infos from client serer
             self.stateTable.updateInfo(server, data)
         except socket.timeout:
-            print >> sys.stderr, 'Timed out, no response'
+            print("Timed out, no response",end="",file=sys.stderr) 
             return -1
         else:
             print('Received message %s from %s') % (data, server)
@@ -65,10 +66,16 @@ class UDPMonitor:
 
 def main():
     #create info table to store server's info
+    ip = "239.8.8.8"
+
+    port = 8888
+
+    time = 10
+
     table = InfoTable()
 
     #create monitor instance
-    monitor = UDPMonitor(table, 30, "239.8.8.8", 8888)
+    monitor = UDPMonitor(table,ip,port,time)
 
     #start monitor
     monitor.multicast()

@@ -1,7 +1,6 @@
 import socket
 import struct
 import sys
-import psutil
 import json
 import pprint
 
