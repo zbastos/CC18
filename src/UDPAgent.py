@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import socket
 import struct
 import sys
@@ -9,21 +11,27 @@ class UDPAgent:
 
     def __init__(self, multicast_group, server_ipport):
         self.multicast_group = multicast_group
-        self.server_port = server_ipport
+        self.server_port = ("",server_ipport)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
 
     def getInfo(self):
-        (_ ,min,max) = psutil.cpu_freq()
-        (memtotal,_,_,_,_,_,_,_) = psutil.virtual_memory()
+        cpu_freq = psutil.cpu_freq()
+
+        min = cpu_freq[1]
+        max = cpu_freq[2]
+
+        virtual = psutil.virtual_memory()
+
+        memtotal = virtual[0]
 
         return (min,max,memtotal)
 
 
     def receive(self):
         # Bind to the server address
-        self.socket.bind(self.server_ipport)
+        self.socket.bind(self.server_port)
 
         # Tell the operating system to add the socket to the multicast group
         # on all interfaces.
@@ -33,12 +41,28 @@ class UDPAgent:
 
         # Receive/respond loop
         while True:
-            print >> sys.stderr, '\nwaiting to receive message'
-            data, address = self.socket.recvfrom(1024)
+            print('\nWaiting to receive message')
+            dataB, addressTup = self.socket.recvfrom(1024)
+            dataStr = str(dataB,"utf-8")
 
-            print >> sys.stderr, 'received %s bytes from %s' % (len(data), address)
-            print >> sys.stderr, data
+            address = addressTup[0]
 
-            print >> sys.stderr, 'sending acknowledgement to', address
+            print('Received', dataStr, 'from', address )
+
+            print('Sending information to', address)
             info = self.getInfo()
-            self.socket.sendto(json.dumps(info), address)
+            print ('Information: ', info)
+            self.socket.sendto(bytes(json.dumps(info),"utf-8"), addressTup)
+
+def main():
+    ip = "239.8.8.8"
+    port = 8888
+
+    #create monitor instance
+    agente = UDPAgent(ip,port)
+    #start monitor
+    agente.receive()
+
+
+if __name__ == "__main__":
+    main()
