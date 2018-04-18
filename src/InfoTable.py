@@ -8,11 +8,12 @@ import pprint
 
 class InfoTable():
 
-	def __init__(self):
-		self.dic = {}
+    def __init__(self):
+        self.dic = {}
 
-	def updateInfo(self,server, info):
-		self.dic[server] = info
+    def updateInfo(self,server, info):
+        info.update({"port":server[1]})
+        self.dic[server[0]] = info
 
-	def printInfo(self):
-		pprint.pprint(self.dic)
+    def printInfo(self):
+        pprint.pprint(self.dic)

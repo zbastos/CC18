@@ -27,10 +27,10 @@ class UDPMonitor:
 		message = "Update infos"
 		try:
 			while True:
-				# depende das infos da tabela, ir buscar o maior (?)
-				ttl = struct.pack('b',1)
+				# depende das infos da tabela, ir buscar o maior (?) verificar se é necessário
+#				ttl = struct.pack('b',1)
 
-				self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+#				self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
 				try:
 					print("Sending broadcast request...")
