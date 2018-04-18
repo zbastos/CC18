@@ -86,6 +86,7 @@ def main():
 
     #create monitor instance
     agente = UDPAgent(ip,port)
+
     #start monitor
     agente.receive()
 
