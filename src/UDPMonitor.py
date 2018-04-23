@@ -19,22 +19,24 @@ class UDPMonitor:
 		self.timeout = timeout
 
 	"""
-			Multicast function, will keep running as long as UDPMonitor is up
+	Multicast function, will keep running as long as UDPMonitor is up
 	"""
 	def multicast(self):
 
 		self.socket.settimeout(self.timeout)
-		message = "Update infos"
+		message = {"type": "probe request"}
+
 		try:
 			while True:
-				# depende das infos da tabela, ir buscar o maior (?) verificar se é necessário
-#				ttl = struct.pack('b',1)
 
-#				self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+				# depende das infos da tabela, ir buscar o maior (?) verificar se é necessário
+				# ttl = struct.pack('b',1)
+				# self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
 				try:
 					print("Sending broadcast request...")
-					sent = self.socket.sendto(bytes(message,"utf-8"), self.multicast_group)
+					message["time"] = time.time()
+					self.socket.sendto(bytes(json.dumps(message), "utf-8"), self.multicast_group)
 
 					while True:
 						if self.receive_msg() != 0:
@@ -56,12 +58,12 @@ class UDPMonitor:
 		print('Waiting to receive')
 
 		try:
-			dataB, server = self.socket.recvfrom(1024)  # (?)
+			data_b, server = self.socket.recvfrom(1024)  # (?)
 			# convert json object to python object
-			datastr = str(dataB,"utf-8")
-			data = json.loads(datastr)
-			# update infos from client serer
-			self.stateTable.updateInfo(server, data)
+			data_str = str(data_b, "utf-8")
+			data = json.loads(data_str)
+			# update info from client server
+			self.stateTable.update_info(server, data)
 		except socket.timeout:
 			print("Timed out, no response")
 			print('==================')
@@ -73,7 +75,7 @@ class UDPMonitor:
 
 
 def main():
-	#create info table to store server's info
+	# create info table to store server's info
 	ip = "239.8.8.8"
 
 	port = 8888
@@ -85,11 +87,11 @@ def main():
 	table = InfoTable()
 
 	print("\nSetting up UDP Monitor...")
-	#create monitor instance
+	# create monitor instance
 	monitor = UDPMonitor(table,ip,port,time)
 
 	print("Starting...")
-	#start monitor
+	# start monitor
 	monitor.multicast()
 
 
