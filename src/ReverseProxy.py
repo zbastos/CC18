@@ -5,19 +5,26 @@ import config
 import monitor
 import socket
 
-#TODO finish
-def listen_from_client(data, client_socket):
-	while True:
-		data = client_socket.recv(config.data_size)
 
-
-def handle_thread(backend_socket, client_socket):
-	data = b""
-	client_listener = Thread(target=listen_from_client, args=[data, client_socket])
-	client_listener.start()
+def listen_from_data(backend_socket, client_socket):
+	data = backend_socket.recv(config.data_size)
 	while True:
 		if not data:
 			backend_socket.close()
+			client_socket.close()
+			break
+		client_socket.send(data)
+		data = backend_socket.recv(config.data_size)
+
+
+def handle_thread(backend_socket, client_socket):
+	client_listener = Thread(target=listen_from_data, args=[backend_socket, client_socket])
+	client_listener.start()
+	data = client_socket.recv(config.data_size)
+	while True:
+		if not data:
+			backend_socket.close()
+			client_socket.close()
 			break
 		backend_socket.send(data)
 		data = client_socket.recv(config.data_size)
