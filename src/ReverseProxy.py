@@ -34,7 +34,7 @@ def main():
 	servers = []
 
 	while True:
-		tcp_server.listen(config.max)
+		tcp_server.listen(config.max_con)
 		print("Waiting for tcp connection")
 		(client_socket, (c_ip, c_port)) = tcp_server.accept()
 		agent_ip = udp_monitor.request_server()

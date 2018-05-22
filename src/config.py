@@ -12,6 +12,6 @@ tcp_ip = "localhost"
 # reverse proxy port
 tcp_port = 8000
 # reverse proxy max connections
-max = 25
+max_con = 25
 # max data size
 data_size = 4086
