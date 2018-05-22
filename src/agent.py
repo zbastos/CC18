@@ -9,37 +9,38 @@ import time
 import random
 import subprocess
 import re
+import config
 
 
 class UDPAgent:
 
 	def __init__(self, multicast_group, server_ipport):
 		self.multicast_group = multicast_group
-		self.server_port = ("",server_ipport)
+		self.server_port = ("", server_ipport)
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 	@staticmethod
 	def get_info():
-		output = subprocess.check_output("lscpu",shell=True)
-		output = str(output,"utf-8")
+		output = subprocess.check_output("lscpu", shell=True)
+		output = str(output, "utf-8")
 
-		maxHz = re.findall(r"CPU\smax\sMHz:\s+([0-9]+)",output)
+		maxHz = re.findall(r"CPU\smax\sMHz:\s+([0-9]+)", output)
 		maxHz = eval(maxHz[0])
 
-		minHz = re.findall(r"CPU\smin\sMHz:\s+([0-9]+)",output)
+		minHz = re.findall(r"CPU\smin\sMHz:\s+([0-9]+)", output)
 		minHz = eval(minHz[0])
 
 		usage = os.getloadavg()[0]
 
-		output = subprocess.check_output("cat /proc/meminfo",shell=True).decode()
+		output = subprocess.check_output("cat /proc/meminfo", shell=True).decode()
 
-		memtotal = re.findall(r"MemTotal:\s+([0-9]+)",output)
+		memtotal = re.findall(r"MemTotal:\s+([0-9]+)", output)
 		memtotal = int(eval(memtotal[0])/1024)
 
-		freemem = re.findall(r"MemFree:\s+([0-9]+)",output)
+		freemem = re.findall(r"MemFree:\s+([0-9]+)", output)
 		freemem = int(eval(freemem[0])/1024)
 
-		avaimem = re.findall(r"MemAvailable:\s+([0-9]+)",output)
+		avaimem = re.findall(r"MemAvailable:\s+([0-9]+)", output)
 		avaimem = int(eval(avaimem[0])/1024)
 
 		return {
@@ -67,26 +68,35 @@ class UDPAgent:
 			print('\nWaiting to receive message')
 			data, address = self.socket.recvfrom(1024)
 
-			msgInfo = json.loads(data.decode())
+			try:
+				msg_info = json.loads(data.decode())
 
-			print('Received', data.decode(), 'from', address[0])
+				print('Received', msg_info, 'from', address[0])
 
-			info = self.get_info()
-			info["sentTime"] = msgInfo["time"]
+				if ('type' in msg_info) and (msg_info['type'] == 'probe request'):
+					if 'time' in msg_info:
+						info = self.get_info()
+						info["sentTime"] = msg_info["time"]
 
-			print('Information: ', info)
-			# don't send them all at once, each sleeps for a litle
-			ms = random.randint(0,10)
-			time.sleep(ms/1000.0)
-			self.socket.sendto(bytes(json.dumps(info),"utf-8"), address)
+						print('Information: ', info)
+						# don't send them all at once, each sleeps for a litle
+						ms = random.randint(0, 10)
+						time.sleep(ms/1000.0)
+						self.socket.sendto(bytes(json.dumps(info), "utf-8"), address)
+					else:
+						print("Erro, msg não contem elemento time")
+				else:
+					print("Erro, msg não type não encontrado/incorreto")
+			except json.decoder.JSONDecodeError:
+				print("Erro, mensagem não vem em JSON")
 
 
 def main():
-	ip = "239.8.8.8"
-	port = 8888
+	ip = config.udp_ip
+	port = config.udp_port
 
 	# create monitor instance
-	agente = UDPAgent(ip,port)
+	agente = UDPAgent(ip, port)
 
 	# start monitor
 	agente.receive()
