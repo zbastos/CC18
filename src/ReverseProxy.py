@@ -38,7 +38,7 @@ def main():
 	tcp_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	tcp_infos = (config.tcp_ip, config.tcp_port)
 	tcp_server.bind(tcp_infos)
-	servers = []
+	clients = []
 
 	while True:
 		tcp_server.listen(config.max_con)
@@ -50,7 +50,7 @@ def main():
 		backend_socket.connect((agent_ip[0], config.tcp_port))
 		handler = Thread(target=handle_thread, args=[backend_socket, client_socket])
 		handler.start()
-		servers.append(handler)
+		clients.append(handler)
 
 
 if __name__ == '__main__':
